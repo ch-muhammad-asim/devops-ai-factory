@@ -17,7 +17,8 @@ This repository is the AI Factory: an AWS/K3s Kubernetes substrate built with Te
 | [`VERSIONS.md`](VERSIONS.md) | Pinned Ubuntu, K3s, provider and Helm chart versions |
 | [`docs/ai-factory/kubernetes-distribution-recommendation.md`](docs/ai-factory/kubernetes-distribution-recommendation.md) | RKE2 vs K3s vs upstream Kubernetes vs OpenShift for a production AI Factory |
 | [`docs/ai-factory/inference-workloads.md`](docs/ai-factory/inference-workloads.md) | Serving models on Kubernetes: GPU integration, vLLM, KServe, KubeRay |
-| [`docs/ai-factory/llm-gateway/README.md`](docs/ai-factory/llm-gateway/README.md) | LiteLLM LLM gateway, plus the [Gateway API](docs/ai-factory/llm-gateway/gateway-api.md) and [AgentGateway](docs/ai-factory/llm-gateway/agentgateway.md) paths |
+| [`docs/ai-factory/llm-gateway/README.md`](docs/ai-factory/llm-gateway/README.md) | LiteLLM LLM gateway, plus the Traefik [Gateway API](docs/ai-factory/llm-gateway/gateway-api.md) path |
+| [`docs/ai-factory/agent-gateway/README.md`](docs/ai-factory/agent-gateway/README.md) | AgentGateway: Gateway API-native gateway for LLM, MCP and A2A traffic, and when to prefer it over LiteLLM |
 | [`docs/ai-factory/llm-kube/README.md`](docs/ai-factory/llm-kube/README.md) | LLMKube operator evaluation |
 | [`docs/ai-factory/mcp-gateway/README.md`](docs/ai-factory/mcp-gateway/README.md) | IBM ContextForge MCP gateway |
 | [`docs/README.md`](docs/README.md) | Full documentation index and Terragrunt unit layout |

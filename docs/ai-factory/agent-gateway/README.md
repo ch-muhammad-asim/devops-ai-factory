@@ -2,7 +2,23 @@
 
 > **Research review:** 2026-09-13. This guide covers the Kubernetes-native **AgentGateway** project (`agentgateway/agentgateway`) for the repository's RKE2 / Kubernetes 1.36.x AI Factory direction. It applies equally to the current K3s `v1.36.4+k3s1` (Kubernetes 1.36) repository cluster, which is inside AgentGateway's 1.32-1.37 support range.
 >
-> **Important correction:** this is a different architecture from the Traefik + LiteLLM path documented in [`gateway-api.md`](gateway-api.md). AgentGateway is itself a Kubernetes Gateway API implementation for agentic, LLM, MCP and AI traffic. You do **not** need to enable Traefik's Gateway API provider just to use AgentGateway.
+> **Important correction:** this is a different architecture from the Traefik + LiteLLM path documented in [`../llm-gateway/gateway-api.md`](../llm-gateway/gateway-api.md). AgentGateway is itself a Kubernetes Gateway API implementation for agentic, LLM, MCP and AI traffic. You do **not** need to enable Traefik's Gateway API provider just to use AgentGateway.
+
+## Position in this repository
+
+This directory holds the AgentGateway path as a first-class alternative to the LiteLLM gateway documented in [`../llm-gateway/README.md`](../llm-gateway/README.md). The two are not layers of one design; pick one as the AI gateway.
+
+Choose **AgentGateway with Gateway API** when the platform needs:
+
+- Kubernetes-native configuration (Gateway, HTTPRoute, `AgentgatewayBackend`) that Argo CD manages like every other resource;
+- one data plane for LLM routing, MCP server federation with per-client tool authorization, and A2A traffic;
+- a Rust data plane with built-in OpenTelemetry metrics, logs and tracing;
+- no PostgreSQL or Redis in the request path;
+- optional Gateway API Inference Extension routing to self-hosted model servers.
+
+Choose **LiteLLM** when the platform needs per-team virtual API keys, budgets and spend tracking, or translation to a very broad set of hosted providers. AgentGateway's documentation does not cover chargeback features.
+
+Both coexist with the repository's Traefik deployment because AgentGateway is its own Gateway API implementation with its own `GatewayClass`; Traefik's Gateway provider stays disabled. When AgentGateway fronts MCP servers, review whether the separate [ContextForge MCP gateway](../mcp-gateway/README.md) is still required.
 
 ## Decision
 
