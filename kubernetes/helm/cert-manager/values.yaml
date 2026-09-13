@@ -1,0 +1,17 @@
+# Upstream cert-manager Helm chart/application: v1.21.1
+# Managed by infrastructure/live/*/*/cert-manager through Terragrunt.
+crds:
+  enabled: true
+  keep: true
+
+# Single-node K3s baseline. Scale these components for an HA cluster.
+replicaCount: 1
+webhook:
+  replicaCount: 1
+cainjector:
+  replicaCount: 1
+startupapicheck:
+  enabled: true
+
+prometheus:
+  enabled: false

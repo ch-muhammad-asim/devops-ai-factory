@@ -1,0 +1,27 @@
+# Terraform / Terragrunt
+.terraform/
+.terragrunt-cache/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Local credentials / kubeconfig
+.env
+*.pem
+*.key
+kubeconfig*
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Local Kubernetes values overrides
+kubernetes/helm/*/values-local.yaml
+kubernetes/helm/argocd/values-traefik.yaml

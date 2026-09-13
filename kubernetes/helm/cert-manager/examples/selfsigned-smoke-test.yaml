@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cert-manager-test
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned
+  namespace: cert-manager-test
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: cert-manager-smoke-test
+  namespace: cert-manager-test
+spec:
+  secretName: cert-manager-smoke-test-tls
+  duration: 24h
+  renewBefore: 8h
+  dnsNames:
+    - cert-manager-smoke-test.local
+  issuerRef:
+    name: selfsigned
+    kind: Issuer

@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+# K3s node bootstrap. Rendered by Terragrunt and delivered through EC2 user data,
+# so the node converges during first boot without SSH or operator-side scripting.
+set -euo pipefail
+
+exec > >(tee /var/log/k3s-bootstrap.log) 2>&1
+
+export DEBIAN_FRONTEND=noninteractive
+
+echo "[k3s-bootstrap] target version: ${k3s_version}"
+echo "[k3s-bootstrap] preparing Ubuntu host"
+
+apt-get update -y
+apt-get install -y --no-install-recommends ca-certificates curl snapd
+
+for binary in curl systemctl; do
+  command -v "$binary" >/dev/null 2>&1 || {
+    echo "[k3s-bootstrap] $binary is required but was not found" >&2
+    exit 1
+  }
+done
+
+# Kubeconfig retrieval later uses AWS Systems Manager instead of SSH. Canonical
+# Ubuntu AWS images normally include the SSM Agent; this block also handles a
+# missing agent by installing the AWS-recommended snap package.
+if systemctl cat amazon-ssm-agent.service >/dev/null 2>&1; then
+  systemctl enable --now amazon-ssm-agent.service
+elif systemctl cat snap.amazon-ssm-agent.amazon-ssm-agent.service >/dev/null 2>&1; then
+  systemctl enable --now snap.amazon-ssm-agent.amazon-ssm-agent.service
+else
+  echo "[k3s-bootstrap] SSM Agent not found; installing the snap package"
+  snap install amazon-ssm-agent --classic
+  snap start amazon-ssm-agent
+fi
+
+# The Elastic IP is associated moments after the instance boots. The EC2 layer
+# tags the node with that address (PublicIp), so it is read from IMDSv2 instance
+# tags rather than from public-ipv4, which still reports the launch-time address
+# until the association completes. Publishing the EIP as a TLS SAN lets the
+# Kubernetes API be reached securely from outside the VPC.
+imds_token() {
+  curl -sf -X PUT "http://169.254.169.254/latest/api/token" \
+    -H "X-aws-ec2-metadata-token-ttl-seconds: 300"
+}
+
+PUBLIC_IP=""
+TOKEN=""
+for attempt in $(seq 1 30); do
+  TOKEN="$(imds_token || true)"
+  if [ -n "$TOKEN" ]; then
+    PUBLIC_IP="$(curl -sf -H "X-aws-ec2-metadata-token: $TOKEN" \
+      http://169.254.169.254/latest/meta-data/tags/instance/PublicIp || true)"
+
+    # Fallback for nodes launched without the tag (module used standalone).
+    if [ -z "$PUBLIC_IP" ]; then
+      PUBLIC_IP="$(curl -sf -H "X-aws-ec2-metadata-token: $TOKEN" \
+        http://169.254.169.254/latest/meta-data/public-ipv4 || true)"
+    fi
+  fi
+
+  if [ -n "$PUBLIC_IP" ]; then
+    echo "[k3s-bootstrap] discovered public address $PUBLIC_IP"
+    break
+  fi
+
+  echo "[k3s-bootstrap] waiting for the Elastic IP association ($attempt/30)"
+  sleep 5
+done
+
+if [ -z "$PUBLIC_IP" ] || [ -z "$TOKEN" ]; then
+  echo "[k3s-bootstrap] no public address was associated with this node" >&2
+  exit 1
+fi
+
+PRIVATE_IP="$(curl -sf -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/local-ipv4)"
+
+curl -sfL https://get.k3s.io | \
+  INSTALL_K3S_VERSION="${k3s_version}" \
+  sh -s - server \
+    --node-name "${cluster_name}" \
+    --tls-san "$PUBLIC_IP" \
+    --tls-san "$PRIVATE_IP" \
+    --write-kubeconfig-mode 600 \
+    ${traefik_flag}
+
+for attempt in $(seq 1 60); do
+  if systemctl is-active --quiet k3s && /usr/local/bin/k3s kubectl get node >/dev/null 2>&1; then
+    /usr/local/bin/k3s --version
+
+    # The operator-facing kubeconfig is written next to the K3s one with the
+    # public endpoint already substituted. Terraform fetches this exact file.
+    install -d -m 0700 /etc/rancher/k3s
+    sed "s#https://127.0.0.1:6443#https://$PUBLIC_IP:6443#" \
+      /etc/rancher/k3s/k3s.yaml > /etc/rancher/k3s/k3s-public.yaml
+    chmod 0600 /etc/rancher/k3s/k3s-public.yaml
+
+    echo "[k3s-bootstrap] k3s is ready"
+    exit 0
+  fi
+
+  sleep 5
+done
+
+echo "[k3s-bootstrap] k3s did not become ready in time" >&2
+systemctl status k3s --no-pager || true
+exit 1

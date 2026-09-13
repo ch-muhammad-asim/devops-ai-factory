@@ -1,0 +1,10 @@
+# Optional upstream Traefik values override to redirect HTTP to HTTPS.
+# Merge this into values.yaml intentionally before a Terragrunt apply.
+ports:
+  web:
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true

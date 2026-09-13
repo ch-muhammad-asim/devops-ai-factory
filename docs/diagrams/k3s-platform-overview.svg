@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">K3s on AWS single-node platform architecture</title>
+  <desc id="desc">Terragrunt provisions AWS networking and an Ubuntu 26.04 LTS EC2 node. Cloud-init installs K3s. Systems Manager retrieves kubeconfig without SSH. Traefik, cert-manager and Argo CD run as Terragrunt-managed Helm releases.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#07111f"/><stop offset="1" stop-color="#142a42"/></linearGradient>
+    <linearGradient id="aws" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#172b4d"/><stop offset="1" stop-color="#0e1d32"/></linearGradient>
+    <linearGradient id="ubuntu" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f97342"/><stop offset="1" stop-color="#e95420"/></linearGradient>
+    <linearGradient id="k3s" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4bd69a"/><stop offset="1" stop-color="#15956c"/></linearGradient>
+    <linearGradient id="platform" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7b68ee"/><stop offset="1" stop-color="#5337ca"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000" flood-opacity=".23"/></filter>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#5ec2ff"/></marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#62d7a5"/></marker>
+    <style>
+      .title{font:700 34px Inter,Segoe UI,Arial,sans-serif;fill:#f8fbff}.subtitle{font:400 16px Inter,Segoe UI,Arial,sans-serif;fill:#a9bdd3}.section{font:700 15px Inter,Segoe UI,Arial,sans-serif;fill:#dfeaff;letter-spacing:.45px}.label{font:700 17px Inter,Segoe UI,Arial,sans-serif;fill:#f8fbff}.small{font:400 14px Inter,Segoe UI,Arial,sans-serif;fill:#c9d8e8}.tiny{font:500 12px Inter,Segoe UI,Arial,sans-serif;fill:#a9bdd3}.dark{fill:#172033}.blue{stroke:#5ec2ff;stroke-width:3;fill:none;marker-end:url(#arrowBlue)}.green{stroke:#62d7a5;stroke-width:3;fill:none;marker-end:url(#arrowGreen)}.dash{stroke-dasharray:8 7}
+    </style>
+  </defs>
+  <rect width="1600" height="900" rx="28" fill="url(#bg)"/>
+  <text x="70" y="72" class="title">K3s on AWS — Single-node Platform Architecture</text>
+  <text x="70" y="102" class="subtitle">Current repository profile · Ubuntu 26.04 LTS · K3s · Terragrunt-only lifecycle</text>
+
+  <rect x="65" y="142" width="1470" height="108" rx="20" fill="#0d1a2b" stroke="#29415d" stroke-width="2"/>
+  <text x="90" y="174" class="section">PROVISIONING &amp; MANAGEMENT</text>
+  <g filter="url(#shadow)">
+    <rect x="95" y="188" width="220" height="44" rx="12" fill="#1c314d" stroke="#3e628d"/><text x="205" y="216" text-anchor="middle" class="label">Terragrunt / Terraform</text>
+    <rect x="385" y="188" width="175" height="44" rx="12" fill="#1c314d" stroke="#3e628d"/><text x="472" y="216" text-anchor="middle" class="label">S3 State</text>
+    <rect x="630" y="188" width="205" height="44" rx="12" fill="#1c314d" stroke="#3e628d"/><text x="732" y="216" text-anchor="middle" class="label">EC2 cloud-init</text>
+    <rect x="905" y="188" width="205" height="44" rx="12" fill="#1c314d" stroke="#3e628d"/><text x="1007" y="216" text-anchor="middle" class="label">AWS Systems Manager</text>
+    <rect x="1180" y="188" width="225" height="44" rx="12" fill="#1c314d" stroke="#3e628d"/><text x="1292" y="216" text-anchor="middle" class="label">kubectl / CI / Operator</text>
+  </g>
+  <path d="M315 210H385" class="blue"/><path d="M560 210H630" class="blue"/><path d="M835 210H905" class="blue"/><path d="M1110 210H1180" class="blue"/>
+
+  <g filter="url(#shadow)">
+    <rect x="70" y="340" width="210" height="130" rx="18" fill="#14263d" stroke="#3f6388" stroke-width="2"/><text x="175" y="377" text-anchor="middle" class="label">Users / Clients</text><text x="175" y="406" text-anchor="middle" class="small">HTTPS traffic</text><text x="175" y="434" text-anchor="middle" class="tiny">applications + Kubernetes API</text>
+    <rect x="335" y="292" width="1195" height="510" rx="28" fill="url(#aws)" stroke="#31567f" stroke-width="2"/>
+    <text x="375" y="327" class="section">AWS CLOUD · VPC · PUBLIC SUBNET</text>
+    <rect x="395" y="380" width="150" height="76" rx="16" fill="#18324f" stroke="#5ec2ff" stroke-width="2"/><text x="470" y="410" text-anchor="middle" class="label">Elastic IP</text><text x="470" y="437" text-anchor="middle" class="small">80 / 443 / 6443</text>
+
+    <rect x="590" y="370" width="860" height="360" rx="24" fill="#101c2d" stroke="#e95420" stroke-width="3"/>
+    <rect x="590" y="370" width="860" height="54" rx="24" fill="url(#ubuntu)"/><rect x="590" y="405" width="860" height="19" fill="url(#ubuntu)"/>
+    <text x="620" y="404" class="dark" style="font:700 20px Inter,Segoe UI,Arial,sans-serif;">EC2 · Ubuntu Server 26.04 LTS · encrypted gp3 · IMDSv2</text>
+
+    <rect x="625" y="455" width="360" height="230" rx="20" fill="#11293a" stroke="#42bf8a" stroke-width="2.5"/>
+    <rect x="625" y="455" width="360" height="50" rx="20" fill="url(#k3s)"/><rect x="625" y="487" width="360" height="18" fill="url(#k3s)"/>
+    <text x="805" y="487" text-anchor="middle" class="label">K3s Server + Worker</text>
+    <text x="650" y="535" class="small">• Kubernetes control plane</text><text x="650" y="565" class="small">• SQLite datastore (single-node)</text><text x="650" y="595" class="small">• kubelet + containerd + CNI</text><text x="650" y="625" class="small">• CoreDNS + local-path storage</text><text x="650" y="655" class="small">• installed by cloud-init user data</text>
+
+    <rect x="1020" y="455" width="395" height="230" rx="20" fill="#151f3d" stroke="#7c5cff" stroke-width="2.5"/>
+    <rect x="1020" y="455" width="395" height="50" rx="20" fill="url(#platform)"/><rect x="1020" y="487" width="395" height="18" fill="url(#platform)"/>
+    <text x="1217" y="487" text-anchor="middle" class="label">Terragrunt-managed Platform</text>
+    <rect x="1045" y="530" width="105" height="70" rx="14" fill="#1d3350" stroke="#52b6ff"/><text x="1097" y="558" text-anchor="middle" class="label">Traefik</text><text x="1097" y="583" text-anchor="middle" class="tiny">Ingress</text>
+    <rect x="1165" y="530" width="105" height="70" rx="14" fill="#2b274b" stroke="#9b7cff"/><text x="1217" y="558" text-anchor="middle" class="label">cert-manager</text><text x="1217" y="583" text-anchor="middle" class="tiny">TLS</text>
+    <rect x="1285" y="530" width="105" height="70" rx="14" fill="#3a283c" stroke="#f19ac7"/><text x="1337" y="558" text-anchor="middle" class="label">Argo CD</text><text x="1337" y="583" text-anchor="middle" class="tiny">GitOps</text>
+    <rect x="1045" y="620" width="345" height="44" rx="12" fill="#123b33" stroke="#62d7a5"/><text x="1217" y="648" text-anchor="middle" class="label">Application Pods / Services</text>
+  </g>
+
+  <path d="M280 405H395" class="green"/><path d="M545 418H590" class="green"/><path d="M985 566H1045" class="green"/>
+  <path d="M732 232V330H805V455" class="blue dash"/><text x="620" y="318" class="tiny">first boot: install K3s</text>
+  <path d="M1007 232V330H900V455" class="blue dash"/><text x="915" y="318" class="tiny">retrieve kubeconfig, no SSH</text>
+  <path d="M1292 232V300H1200V455" class="blue dash"/><text x="1210" y="290" class="tiny">Kubernetes API</text>
+
+  <rect x="65" y="824" width="1470" height="48" rx="14" fill="#0d1a2b" stroke="#29415d"/>
+  <circle cx="95" cy="848" r="6" fill="#5ec2ff"/><text x="110" y="853" class="tiny">management / bootstrap</text><circle cx="300" cy="848" r="6" fill="#62d7a5"/><text x="315" y="853" class="tiny">runtime traffic</text><text x="1490" y="853" text-anchor="end" class="tiny">Current profile: single EC2 · no node-level HA</text>
+</svg>

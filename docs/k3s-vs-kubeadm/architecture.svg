@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1040" viewBox="0 0 1600 1040" role="img" aria-labelledby="title desc">
+  <title id="title">K3s vs kubeadm architecture and K3s container modes</title>
+  <desc id="desc">A colorful architecture comparison of native K3s, K3s in Docker or k3d, and kubeadm, with guidance for single-node, HA, and local development.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8fafc"/><stop offset="1" stop-color="#eef2ff"/></linearGradient>
+    <linearGradient id="k3s" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22c55e"/><stop offset="1" stop-color="#15803d"/></linearGradient>
+    <linearGradient id="docker" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#38bdf8"/><stop offset="1" stop-color="#0369a1"/></linearGradient>
+    <linearGradient id="kubeadm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#818cf8"/><stop offset="1" stop-color="#4338ca"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.12"/></filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#475569"/></marker>
+    <style>
+      .title{font:700 36px Inter,Arial,sans-serif;fill:#0f172a}.subtitle{font:400 18px Inter,Arial,sans-serif;fill:#475569}
+      .section{font:700 24px Inter,Arial,sans-serif;fill:white}.body{font:500 17px Inter,Arial,sans-serif;fill:#0f172a}.small{font:400 15px Inter,Arial,sans-serif;fill:#475569}.label{font:700 17px Inter,Arial,sans-serif;fill:#0f172a}.white{fill:white}.pill{font:700 14px Inter,Arial,sans-serif;fill:white}.note{font:600 15px Inter,Arial,sans-serif;fill:#334155}
+    </style>
+  </defs>
+  <rect width="1600" height="1040" fill="url(#bg)"/>
+  <text x="80" y="64" class="title">K3s vs kubeadm — architecture and container modes</text>
+  <text x="80" y="96" class="subtitle">Choose the operating model based on the requirement: simple server, local/CI containerized cluster, or explicit upstream-style Kubernetes bootstrap.</text>
+
+  <!-- Native K3s -->
+  <g filter="url(#shadow)">
+    <rect x="70" y="140" width="455" height="620" rx="24" fill="white"/>
+    <rect x="70" y="140" width="455" height="76" rx="24" fill="url(#k3s)"/>
+    <rect x="70" y="192" width="455" height="24" fill="url(#k3s)"/>
+  </g>
+  <text x="98" y="184" class="section">Native K3s on Linux / EC2</text>
+  <rect x="96" y="242" width="403" height="480" rx="18" fill="#ecfdf5" stroke="#86efac" stroke-width="2"/>
+  <text x="120" y="278" class="label">Linux host / EC2</text>
+  <rect x="120" y="304" width="355" height="116" rx="14" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+  <text x="144" y="339" class="label">K3s server service</text>
+  <text x="144" y="368" class="small">API server • scheduler • controllers</text>
+  <text x="144" y="393" class="small">datastore • kubelet • CNI</text>
+  <line x1="297" y1="420" x2="297" y2="458" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="120" y="462" width="355" height="78" rx="14" fill="#f0fdf4" stroke="#4ade80" stroke-width="2"/>
+  <text x="144" y="494" class="label">Embedded containerd</text>
+  <text x="144" y="519" class="small">Default K3s container runtime</text>
+  <line x1="297" y1="540" x2="297" y2="578" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="120" y="582" width="355" height="106" rx="14" fill="#ffffff" stroke="#86efac" stroke-width="2"/>
+  <text x="144" y="615" class="label">Kubernetes workloads</text>
+  <text x="144" y="644" class="small">Traefik • cert-manager • Argo CD</text>
+  <text x="144" y="669" class="small">application Pods / Services</text>
+  <rect x="98" y="685" width="150" height="26" rx="13" fill="#15803d"/><text x="116" y="703" class="pill">REPO DEFAULT</text>
+
+  <!-- K3s in Docker -->
+  <g filter="url(#shadow)">
+    <rect x="572" y="140" width="455" height="620" rx="24" fill="white"/>
+    <rect x="572" y="140" width="455" height="76" rx="24" fill="url(#docker)"/>
+    <rect x="572" y="192" width="455" height="24" fill="url(#docker)"/>
+  </g>
+  <text x="600" y="184" class="section">K3s in Docker / k3d</text>
+  <rect x="598" y="242" width="403" height="480" rx="18" fill="#eff6ff" stroke="#7dd3fc" stroke-width="2"/>
+  <text x="622" y="278" class="label">Developer / CI host</text>
+  <rect x="622" y="304" width="355" height="68" rx="14" fill="#e0f2fe" stroke="#38bdf8" stroke-width="2"/>
+  <text x="646" y="346" class="label">Docker engine</text>
+  <line x1="799" y1="372" x2="799" y2="410" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="622" y="414" width="355" height="138" rx="14" fill="#dbeafe" stroke="#0284c7" stroke-width="2"/>
+  <text x="646" y="448" class="label">Privileged K3s node container(s)</text>
+  <text x="646" y="477" class="small">rancher/k3s image</text>
+  <text x="646" y="502" class="small">server / agent + kubelet + CNI</text>
+  <text x="646" y="527" class="small">containerd inside each K3s node</text>
+  <line x1="799" y1="552" x2="799" y2="590" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="622" y="594" width="355" height="94" rx="14" fill="#ffffff" stroke="#7dd3fc" stroke-width="2"/>
+  <text x="646" y="628" class="label">Kubernetes workloads</text>
+  <text x="646" y="657" class="small">Disposable dev / test / CI clusters</text>
+  <rect x="600" y="685" width="196" height="26" rx="13" fill="#0369a1"/><text x="618" y="703" class="pill">BEST WITH K3D FOR LABS</text>
+
+  <!-- kubeadm -->
+  <g filter="url(#shadow)">
+    <rect x="1074" y="140" width="455" height="620" rx="24" fill="white"/>
+    <rect x="1074" y="140" width="455" height="76" rx="24" fill="url(#kubeadm)"/>
+    <rect x="1074" y="192" width="455" height="24" fill="url(#kubeadm)"/>
+  </g>
+  <text x="1102" y="184" class="section">kubeadm / upstream-style bootstrap</text>
+  <rect x="1100" y="242" width="403" height="480" rx="18" fill="#eef2ff" stroke="#a5b4fc" stroke-width="2"/>
+  <text x="1124" y="278" class="label">Linux host(s)</text>
+  <rect x="1124" y="304" width="355" height="72" rx="14" fill="#e0e7ff" stroke="#818cf8" stroke-width="2"/>
+  <text x="1148" y="336" class="label">CRI runtime + kubelet</text>
+  <text x="1148" y="360" class="small">Prepared separately</text>
+  <line x1="1301" y1="376" x2="1301" y2="410" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="1124" y="414" width="355" height="100" rx="14" fill="#c7d2fe" stroke="#6366f1" stroke-width="2"/>
+  <text x="1148" y="447" class="label">kubeadm init / join</text>
+  <text x="1148" y="476" class="small">Bootstraps control plane and workers</text>
+  <text x="1148" y="500" class="small">CNI installed separately</text>
+  <line x1="1301" y1="514" x2="1301" y2="552" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="1124" y="556" width="355" height="132" rx="14" fill="#ffffff" stroke="#a5b4fc" stroke-width="2"/>
+  <text x="1148" y="589" class="label">Kubernetes cluster</text>
+  <text x="1148" y="618" class="small">Single CP or HA control plane</text>
+  <text x="1148" y="643" class="small">Stacked etcd or external etcd</text>
+  <text x="1148" y="668" class="small">More explicit operator ownership</text>
+  <rect x="1102" y="685" width="205" height="26" rx="13" fill="#4338ca"/><text x="1120" y="703" class="pill">MAXIMUM EXPLICIT CONTROL</text>
+
+  <!-- Recommendation row -->
+  <text x="80" y="824" class="title" style="font-size:28px">Fast decision guide</text>
+  <g filter="url(#shadow)">
+    <rect x="80" y="850" width="440" height="122" rx="18" fill="#ffffff"/>
+    <rect x="580" y="850" width="440" height="122" rx="18" fill="#ffffff"/>
+    <rect x="1080" y="850" width="440" height="122" rx="18" fill="#ffffff"/>
+  </g>
+  <circle cx="116" cy="890" r="18" fill="#22c55e"/><text x="109" y="897" class="white" style="font:700 20px Arial">1</text>
+  <text x="148" y="886" class="label">One server + Kubernetes</text>
+  <text x="148" y="916" class="note">Prefer native K3s.</text>
+  <text x="148" y="943" class="small">If Kubernetes is not needed, use Compose.</text>
+
+  <circle cx="616" cy="890" r="18" fill="#0ea5e9"/><text x="609" y="897" class="white" style="font:700 20px Arial">2</text>
+  <text x="648" y="886" class="label">Local development / CI</text>
+  <text x="648" y="916" class="note">Prefer k3d for K3s-in-Docker.</text>
+  <text x="648" y="943" class="small">Fast, disposable, multi-node labs.</text>
+
+  <circle cx="1116" cy="890" r="18" fill="#6366f1"/><text x="1109" y="897" class="white" style="font:700 20px Arial">3</text>
+  <text x="1148" y="886" class="label">Explicit upstream operations</text>
+  <text x="1148" y="916" class="note">Choose kubeadm when it is a requirement.</text>
+  <text x="1148" y="943" class="small">For HA, use independent failure domains.</text>
+
+  <text x="80" y="1010" class="small">Important: multiple K3s/kubeadm VMs or containers on one physical host can simulate HA topology, but they do not provide physical-host high availability.</text>
+</svg>

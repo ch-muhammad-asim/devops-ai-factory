@@ -1,0 +1,9 @@
+# Optional upstream Argo CD values override.
+# Replace the hostname, merge intentionally, then apply the argocd Terragrunt unit.
+server:
+  ingress:
+    enabled: true
+    controller: generic
+    ingressClassName: traefik
+    hostname: argocd.example.com
+    tls: false

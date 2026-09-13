@@ -1,0 +1,17 @@
+# Upstream Argo CD Helm chart: 10.8.1
+# Argo CD application: v3.5.2
+# Managed by infrastructure/live/*/*/argocd through Terragrunt.
+configs:
+  params:
+    # Traefik terminates HTTP/TLS when ingress is enabled.
+    server.insecure: true
+
+server:
+  service:
+    type: ClusterIP
+
+  ingress:
+    # Disabled until an environment-specific DNS/TLS design is configured.
+    enabled: false
+    controller: generic
+    ingressClassName: traefik

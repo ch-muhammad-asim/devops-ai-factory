@@ -1,0 +1,73 @@
+# Upstream Traefik Helm chart: 41.4.0
+# Traefik Proxy: v3.7.12
+# Managed by infrastructure/live/*/*/traefik through Terragrunt.
+deployment:
+  kind: Deployment
+  replicas: 1
+
+ingressClass:
+  enabled: true
+  isDefaultClass: true
+  name: traefik
+
+providers:
+  kubernetesCRD:
+    enabled: true
+    allowCrossNamespace: false
+    allowExternalNameServices: false
+  kubernetesIngress:
+    enabled: true
+    allowExternalNameServices: false
+    publishedService:
+      enabled: true
+  kubernetesGateway:
+    enabled: false
+
+gateway:
+  enabled: false
+gatewayClass:
+  enabled: false
+
+service:
+  enabled: true
+  # K3s ServiceLB exposes LoadBalancer services on the node. On the current
+  # single-node profile this makes ports 80/443 reachable through the EC2 EIP.
+  spec:
+    type: LoadBalancer
+
+ports:
+  web:
+    expose:
+      default: true
+    exposedPort: 80
+  websecure:
+    expose:
+      default: true
+    exposedPort: 443
+
+ingressRoute:
+  dashboard:
+    enabled: false
+
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+log:
+  level: INFO
+accessLog:
+  enabled: true
+  format: json
+
+# No CPU limit is set on purpose: an explicit null renders as a zero limit and
+# the API server then rejects the deployment. Memory stays capped.
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 512Mi
+
+env:
+  - name: GOMAXPROCS
+    value: "2"
