@@ -8,6 +8,7 @@ The main AI Factory guide is the repository [`README.md`](../../README.md). This
 - [`agent-gateway/README.md`](agent-gateway/README.md) - AgentGateway, a Gateway API-native gateway for LLM, MCP and A2A traffic, and when to prefer it over LiteLLM.
 - [`llm-kube/README.md`](llm-kube/README.md) - LLMKube operator evaluation.
 - [`mcp-gateway/README.md`](mcp-gateway/README.md) - IBM ContextForge MCP gateway.
+- [`ai-playground/README.md`](ai-playground/README.md) - local AI playground on an Apple Silicon Mac with minikube + krunkit, where pods get the GPU.
 - [`architecture.svg`](architecture.svg) / [`architecture.png`](architecture.png) - simple AI Factory architecture visual.
 
 The Kubernetes substrate these guides run on is documented in [`../platform/README.md`](../platform/README.md).

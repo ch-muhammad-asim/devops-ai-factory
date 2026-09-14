@@ -21,6 +21,7 @@ This repository is the AI Factory: an AWS/K3s Kubernetes substrate built with Te
 | [`docs/ai-factory/agent-gateway/README.md`](docs/ai-factory/agent-gateway/README.md) | AgentGateway: Gateway API-native gateway for LLM, MCP and A2A traffic, and when to prefer it over LiteLLM |
 | [`docs/ai-factory/llm-kube/README.md`](docs/ai-factory/llm-kube/README.md) | LLMKube operator evaluation |
 | [`docs/ai-factory/mcp-gateway/README.md`](docs/ai-factory/mcp-gateway/README.md) | IBM ContextForge MCP gateway |
+| [`docs/ai-factory/ai-playground/README.md`](docs/ai-factory/ai-playground/README.md) | Local AI playground on an Apple Silicon Mac: minikube + krunkit with GPU-scheduled pods |
 | [`docs/README.md`](docs/README.md) | Full documentation index and Terragrunt unit layout |
 
 ```text
