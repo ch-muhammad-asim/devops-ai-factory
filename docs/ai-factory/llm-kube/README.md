@@ -494,6 +494,191 @@ For the production AI Factory, vLLM/SafeTensors models are likely more relevant 
 
 ---
 
+## Worked example: Gemma 3 1B on the current CPU-only node
+
+This example runs end to end on the repository as committed today: one Ubuntu 26.04 LTS `t3.medium` (2 vCPU, 4 GiB RAM) running K3s `v1.36.4+k3s1`, no GPU. It uses the smallest instruction-tuned Gemma release in GGUF form on the llama.cpp runtime, which is LLMKube's default. Everything below was checked against the v0.9.25 CRDs and the Hugging Face repositories on 2026-09-13.
+
+### What Hugging Face is
+
+[Hugging Face](https://huggingface.co) is the public registry where most open-weight models are published. Think of it as GitHub for model files:
+
+- A **model repository** has an owner and a name, for example `google/gemma-3-1b-it`. It holds the weights, a `config.json`, tokenizer files and a model card describing the license and intended use.
+- Files are fetched over HTTPS from `https://huggingface.co/<owner>/<repo>/resolve/main/<file>`. LLMKube's `hf://` source scheme is shorthand for exactly that URL.
+- **Gated repositories** require you to be logged in and to accept the publisher's terms once, in the browser, before any download works. Access is granted per user, not per organization.
+- A **User Access Token** authenticates scripts and clusters instead of your password. Create one under Settings, Access Tokens. Use a `read` token, or better a `fine-grained` token scoped to just the repository you need, and never commit it to Git.
+
+### Which Gemma files to use
+
+Gemma weights come in two shapes:
+
+| Repository | Format | Gated | Size | Use with |
+|---|---|---|---|---|
+| `google/gemma-3-1b-it` | SafeTensors (original) | Yes, manual acceptance of the Gemma terms | ~2 GB | vLLM, TGI, transformers |
+| `ggml-org/gemma-3-1b-it-GGUF` | GGUF, converted by the llama.cpp maintainers | No | Q4_K_M 806 MB, Q8_0 1.07 GB, F16 2.0 GB | llama.cpp |
+
+The GGUF conversion is what runs on a CPU. It is not gated, so no token is needed for the download, but it is still distributed under Google's [Gemma Terms of Use](https://ai.google.dev/gemma/terms), which you accept by using it. `Q4_K_M` is the standard 4-bit quantization: a quarter of the memory of the original for a small quality loss, and the right choice for a 4 GiB node.
+
+The context window is 32K tokens, but every token of context costs KV-cache memory. On this node keep it at 2048.
+
+### Step 1: install LLMKube
+
+Follow the Helm installation section above. K3s ships the `local-path` StorageClass as default, which satisfies the operator's `ReadWriteOnce` model cache. On a fresh install the values file needs nothing storage-specific:
+
+```bash
+helm upgrade --install llmkube llmkube/llmkube \
+  --namespace llmkube-system \
+  --create-namespace \
+  --version 0.9.25 \
+  -f llmkube-values.yaml \
+  --wait --timeout 10m
+
+kubectl get storageclass
+kubectl -n llmkube-system get pods
+```
+
+### Step 2: create a namespace and, if needed, the token Secret
+
+Models live in their own namespace. The operator creates the shared cache PVC `llmkube-model-cache` there on first use.
+
+```bash
+kubectl create namespace ai-models
+```
+
+The GGUF repository is public, so this step is optional for the example. It becomes required the moment you point at a gated or private repository such as `google/gemma-3-1b-it`. LLMKube reads the token from a Secret key named `HF_TOKEN` and sends it only to `huggingface.co`, dropping it on any redirect to a CDN:
+
+```bash
+read -rs HF_TOKEN
+kubectl -n ai-models create secret generic hf-token --from-literal=HF_TOKEN="$HF_TOKEN"
+unset HF_TOKEN
+```
+
+Before that works for a gated repository, open its page in the browser while logged in and click **Agree and send request to access repo**. For `google/gemma-3-1b-it` approval is manual and can take a while.
+
+### Step 3: declare the Model
+
+`gemma-model.yaml`:
+
+```yaml
+apiVersion: inference.llmkube.dev/v1alpha1
+kind: Model
+metadata:
+  name: gemma-3-1b-it
+  namespace: ai-models
+spec:
+  # hf://<owner>/<repo>/<file> resolves to https://huggingface.co/<owner>/<repo>/resolve/main/<file>
+  source: hf://ggml-org/gemma-3-1b-it-GGUF/gemma-3-1b-it-Q4_K_M.gguf
+  format: gguf
+  quantization: Q4_K_M
+
+  # Download into the namespace's shared cache now, before any InferenceService exists.
+  prefetch: true
+
+  # Uncomment for a gated or private repository. The Secret must exist first.
+  # sourceSecretRef:
+  #   name: hf-token
+
+  hardware:
+    accelerator: cpu
+
+  resources:
+    cpu: "1"
+    memory: 2Gi
+```
+
+Apply it and watch the download Job:
+
+```bash
+kubectl apply -f gemma-model.yaml
+kubectl -n ai-models get model gemma-3-1b-it -w
+kubectl -n ai-models logs job/gemma-3-1b-it-prefetch -f
+kubectl -n ai-models get pvc
+```
+
+`status.phase` moves from `Downloading` to `Ready`, and `status.cacheKey` records the hash the file is stored under. The 806 MB pull takes a minute or two on the EC2 node. Delete and recreate the Model or its InferenceService afterwards and nothing is downloaded again.
+
+### Step 4: declare the InferenceService
+
+`gemma-service.yaml`:
+
+```yaml
+apiVersion: inference.llmkube.dev/v1alpha1
+kind: InferenceService
+metadata:
+  name: gemma-3-1b-it
+  namespace: ai-models
+spec:
+  modelRef: gemma-3-1b-it
+  runtime: llamacpp
+  replicas: 1
+
+  # Sized for a 4 GiB node shared with K3s, Traefik, cert-manager and Argo CD.
+  contextSize: 2048
+  parallelSlots: 1
+  noWarmup: true
+
+  endpoint:
+    port: 8080
+    path: /v1/chat/completions
+    type: ClusterIP
+
+  resources:
+    gpu: 0
+    cpu: "1"
+    memory: 2Gi
+```
+
+`parallelSlots: 1` limits llama.cpp to one request at a time, which keeps KV-cache memory predictable. Raise `contextSize` and `parallelSlots` together with `resources.memory` on a bigger node.
+
+```bash
+kubectl apply -f gemma-service.yaml
+kubectl -n ai-models get inferenceservice gemma-3-1b-it -w
+kubectl -n ai-models get pods -o wide
+kubectl -n ai-models logs deploy/gemma-3-1b-it -f
+```
+
+The pod starts from the cached file, so it should be `Ready` within a minute once the image `ghcr.io/ggml-org/llama.cpp:server` is pulled.
+
+### Step 5: send a request
+
+llama.cpp exposes an OpenAI-compatible API. Port-forward the Service and ask it something:
+
+```bash
+kubectl -n ai-models port-forward svc/gemma-3-1b-it 8080:8080
+```
+
+```bash
+curl -s http://localhost:8080/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "gemma-3-1b-it",
+    "messages": [{"role": "user", "content": "In two sentences, what is Kubernetes?"}],
+    "max_tokens": 120
+  }'
+```
+
+Expect a few tokens per second on two vCPUs. That is enough to prove the operator, the cache, the Hugging Face download path and the OpenAI-compatible surface before any GPU exists. The same Service is what a LiteLLM or AgentGateway backend would point at.
+
+### Step 6: clean up
+
+```bash
+kubectl -n ai-models delete inferenceservice gemma-3-1b-it
+kubectl -n ai-models delete model gemma-3-1b-it
+kubectl -n ai-models delete secret hf-token
+kubectl delete namespace ai-models
+```
+
+Deleting the namespace also removes the cache PVC and the downloaded file.
+
+### Fitting on the t3.medium
+
+The platform components already use roughly half of the node's 4 GiB. If the inference pod stays `Pending` with an insufficient-memory event, or is OOM-killed, check `kubectl top node` and either lower `contextSize` to 1024 or move the node to `t3.large` by changing `instance_type` in `infrastructure/live/_common/ec2.hcl`. That change replaces the EC2 instance, so clear termination protection first as the platform README describes.
+
+### Moving to the original weights and a GPU
+
+When a GPU worker exists, the same pattern serves the gated SafeTensors release through vLLM: set `source: google/gemma-3-1b-it` on the Model, keep `sourceSecretRef` pointing at the `HF_TOKEN` Secret so vLLM can download at start-up, use `runtime: vllm` with `skipModelInit: true` on the InferenceService, and request `resources.gpu: 1`. The next section covers that path.
+
+---
+
 ## vLLM path
 
 LLMKube can manage vLLM as the runtime rather than us hand-writing every vLLM Deployment.
