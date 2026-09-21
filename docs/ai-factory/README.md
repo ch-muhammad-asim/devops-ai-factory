@@ -2,6 +2,7 @@
 
 The main AI Factory guide is the repository [`README.md`](../../README.md). This directory holds the supporting research and Helm guides:
 
+- [`ai-llm-concepts-for-everyone.md`](ai-llm-concepts-for-everyone.md) - beginner-friendly AI/LLM vocabulary and mental models: tokens, prompts, temperature, context, RAG, embeddings, agents, tools, MCP, gateways, inference runtimes, quantization, GPUs, Kubernetes and the AI Factory.
 - [`kubernetes-distribution-recommendation.md`](kubernetes-distribution-recommendation.md) - RKE2 vs upstream Kubernetes vs OpenShift vs K3s for a production AI Factory.
 - [`inference-workloads.md`](inference-workloads.md) - AI inference on Kubernetes, host GPU integration, vLLM/KServe/KubeRay.
 - [`llm-gateway/README.md`](llm-gateway/README.md) - LiteLLM LLM gateway; [`llm-gateway/gateway-api.md`](llm-gateway/gateway-api.md) covers the Traefik Gateway API path in front of it.
