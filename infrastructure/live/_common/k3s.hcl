@@ -18,5 +18,5 @@ inputs = {
   k3s_version = local.k3s_version
 
   # Fail the run rather than hang if the node never publishes a kubeconfig.
-  kubeconfig_timeout_seconds = 900
+  kubeconfig_timeout_seconds = 1800
 }

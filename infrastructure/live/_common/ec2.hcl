@@ -34,12 +34,18 @@ inputs = {
     primary = {}
   }
 
+  # Default single-node bootstrap. Multi-node environments can override
+  # user_data per entry in the instances map.
   user_data = templatefile(
     "${get_repo_root()}/infrastructure/templates/k3s-install.sh.tftpl",
     {
-      cluster_name = local.cluster_name
-      k3s_version  = local.k3s_config.locals.k3s_version
-      traefik_flag = local.k3s_config.locals.enable_traefik ? "" : "--disable traefik"
+      node_name           = local.cluster_name
+      node_role           = "server-init"
+      server_url          = ""
+      k3s_token           = "__K3S_CLUSTER_TOKEN__"
+      expected_node_count = 1
+      k3s_version         = local.k3s_config.locals.k3s_version
+      traefik_flag        = local.k3s_config.locals.enable_traefik ? "" : "--disable traefik"
     },
   )
 }

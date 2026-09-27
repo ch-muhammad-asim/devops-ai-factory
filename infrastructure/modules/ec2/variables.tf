@@ -52,7 +52,10 @@ variable "instances" {
     name             = optional(string)
     instance_type    = optional(string)
     subnet_id        = optional(string)
+    private_ip       = optional(string)
+    allocate_eip     = optional(bool, true)
     root_volume_size = optional(number)
+    user_data        = optional(string)
     tags             = optional(map(string), {})
   }))
 
@@ -87,6 +90,12 @@ variable "ingress_rules" {
   default = {}
 }
 
+variable "allow_cluster_internal_traffic" {
+  description = "Allow all traffic between instances that share this module's security group. Useful for Kubernetes/K3s east-west control-plane, etcd, kubelet, CNI, and pod networking traffic."
+  type        = bool
+  default     = false
+}
+
 variable "additional_iam_policy_arns" {
   description = "Additional managed IAM policies to attach to the shared EC2 instance role."
   type        = set(string)
@@ -109,6 +118,14 @@ variable "enable_stop_protection" {
   description = "Enable EC2 API stop protection so the node cannot be stopped accidentally."
   type        = bool
   default     = false
+}
+
+
+variable "k3s_cluster_token" {
+  description = "Optional K3s shared cluster token. When null, the module generates a stable random token and substitutes it into per-node user data at the __K3S_CLUSTER_TOKEN__ placeholder."
+  type        = string
+  default     = null
+  sensitive   = true
 }
 
 variable "user_data" {

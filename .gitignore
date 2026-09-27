@@ -25,3 +25,7 @@ kubeconfig*
 # Local Kubernetes values overrides
 kubernetes/helm/*/values-local.yaml
 kubernetes/helm/argocd/values-traefik.yaml
+
+# Terragrunt-generated files
+backend.tf
+provider.tf

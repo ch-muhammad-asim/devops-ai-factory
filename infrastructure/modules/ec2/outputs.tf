@@ -4,8 +4,11 @@ output "instance_ids" {
 }
 
 output "public_ips" {
-  description = "Map of stable Elastic IPs keyed by var.instances."
-  value       = { for key, eip in aws_eip.this : key => eip.public_ip }
+  description = "Map of public IPs keyed by var.instances. Nodes with allocate_eip=true use a stable EIP; other nodes use their launch-time public IP."
+  value = {
+    for key, instance in aws_instance.this :
+    key => try(aws_eip.this[key].public_ip, instance.public_ip)
+  }
 }
 
 output "private_ips" {
