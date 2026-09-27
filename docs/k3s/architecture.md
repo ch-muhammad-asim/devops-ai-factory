@@ -217,7 +217,7 @@ flowchart LR
     S1 <-->|etcd| S3
 ```
 
-The repository currently deploys the single-node profile. Moving to HA should create multiple independent EC2 instances and distribute them across failure domains; creating several VMs on the same EC2 instance would not satisfy the HA objective.
+The repository currently deploys a five-node lab: three K3s servers with embedded etcd and two agents, all in one subnet and Availability Zone. Full HA still needs the servers spread across Availability Zones and a load-balanced API endpoint; creating several VMs on the same EC2 instance would not satisfy the HA objective.
 
 ## Sources
 

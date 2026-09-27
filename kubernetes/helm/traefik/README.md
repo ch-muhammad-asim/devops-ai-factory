@@ -48,7 +48,7 @@ terragrunt run --all apply
 
 ## Service exposure
 
-K3s ServiceLB remains enabled. Traefik uses a `LoadBalancer` Service, allowing ports 80/443 to be exposed on the node in the current single-node profile.
+K3s ServiceLB remains enabled. Traefik uses a `LoadBalancer` Service, allowing ports 80/443 to be exposed on the nodes. In the current five-node profile, reach it through server-1's Elastic IP; the other nodes have only launch-time public addresses.
 
 The dashboard is disabled by default.
 

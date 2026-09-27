@@ -1,6 +1,6 @@
 # MCP Gateway on Kubernetes
 
-> **Research review:** 2026-09-13. This guide targets the repository's production AI Factory direction: Ubuntu 24.04 LTS, RKE2 / Kubernetes 1.36.x, containerd, Traefik, cert-manager, Argo CD, NVIDIA GPU workers, LiteLLM for model/API routing, and vLLM/KServe/KubeRay for inference. The repository as committed today runs K3s `v1.36.4+k3s1` (Kubernetes 1.36) on a single Ubuntu 26.04 LTS `t3.medium` EC2 node with no GPU; see [`../kubernetes-distribution-recommendation.md`](../kubernetes-distribution-recommendation.md) for why the production profile differs.
+> **Research review:** 2026-09-13. This guide targets the repository's production AI Factory direction: Ubuntu 24.04 LTS, RKE2 / Kubernetes 1.36.x, containerd, Traefik, cert-manager, Argo CD, NVIDIA GPU workers, LiteLLM for model/API routing, and vLLM/KServe/KubeRay for inference. The repository as committed today runs K3s `v1.36.4+k3s1` (Kubernetes 1.36) on five Ubuntu 26.04 LTS `t3a.medium` EC2 nodes (3 embedded-etcd servers, 2 workers) with no GPU; see [`../kubernetes-distribution-recommendation.md`](../kubernetes-distribution-recommendation.md) for why the production profile differs.
 >
 > The implementation selected for this guide is **IBM ContextForge** (`IBM/mcp-context-forge`) because it currently provides a production-oriented MCP gateway/registry, a maintained Kubernetes Helm chart, PostgreSQL/Redis support, authentication, policy/guardrail features, observability, HA/HPA options, and a current GA release.
 
@@ -1109,7 +1109,7 @@ CPU platform workers                                     GPU workers
      Git       DB/API     SaaS/internal tools
 ```
 
-This is the target topology. The repository as committed today is one Ubuntu 26.04 LTS `t3.medium` EC2 node running K3s `v1.36.4+k3s1` with Traefik, cert-manager and Argo CD, and no GPU node.
+This is the target topology. The repository as committed today is five Ubuntu 26.04 LTS `t3a.medium` EC2 nodes (3 embedded-etcd servers, 2 workers) running K3s `v1.36.4+k3s1` with Traefik, cert-manager and Argo CD, and no GPU node.
 
 This separation is intentional:
 

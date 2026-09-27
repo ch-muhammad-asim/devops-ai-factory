@@ -257,8 +257,8 @@ Terragrunt
     +--> VPC
     |
     +--> EC2
-           Ubuntu 26.04 LTS
-           K3s server + worker
+           5 x Ubuntu 26.04 LTS t3a.medium
+           3 K3s servers (embedded etcd) + 2 agents
     |
     +--> K3s kubeconfig retrieval
     |
@@ -278,9 +278,9 @@ Important characteristics:
 - SSH is not required.
 - AWS Systems Manager is used to retrieve kubeconfig securely.
 - K3s's bundled Traefik is disabled and the official chart is managed separately.
-- The current profile is a single K3s server/worker and therefore **not node-level HA**.
+- The current profile is five nodes: three K3s servers with embedded etcd, tainted for critical add-ons only, and two workers. The control plane tolerates one server loss, but the API endpoint is anchored to server-1's Elastic IP and all nodes share one Availability Zone, so it is **not yet fully HA**.
 
-The current `t3.medium` profile is useful for the platform/control-plane path, not as a serious AI training machine.
+The current `t3a.medium` profile is useful for the platform/control-plane path, not as a serious AI training machine.
 
 ---
 
@@ -621,7 +621,7 @@ scheduled etcd snapshots
 separate worker capacity as required
 ```
 
-Goal: remove single-node failure dependency.
+Goal: remove single-node failure dependency. The five-node `dev/us-east-1` lab already delivers three embedded-etcd servers and two workers; a load-balanced API endpoint, multi-AZ placement and scheduled etcd snapshots remain.
 
 ### Phase 3 — first GPU worker pool
 
@@ -753,6 +753,6 @@ See [`../../VERSIONS.md`](VERSIONS.md) for the migration commands and current pl
 
 **Should this same cluster be responsible for creating every lower AWS infrastructure dependency? Not by default. Keep Terragrunt/Terraform underneath it.**
 
-**Is the current one-node `t3.medium` an AI factory? No. It is the beginning of the platform layer.**
+**Is the current five-node `t3a.medium` lab an AI factory? No. It is the beginning of the platform layer.**
 
 **Can this repository evolve into one? Yes — and Ubuntu 26.04 LTS makes the GPU-worker path cleaner and better aligned with current AI-platform validation guidance.**

@@ -1,6 +1,6 @@
 # LLMKube for the AI Factory
 
-> **Research review:** 2026-09-13. This guide is based on the current LLMKube documentation and upstream Helm chart. The target production AI Factory baseline remains Ubuntu 24.04 LTS + RKE2 / Kubernetes 1.36.x + containerd + NVIDIA GPU Operator. The repository as committed today runs K3s `v1.36.4+k3s1` (Kubernetes 1.36) on a single Ubuntu 26.04 LTS `t3.medium` EC2 node with no GPU; see [`../kubernetes-distribution-recommendation.md`](../kubernetes-distribution-recommendation.md) for why the production profile differs.
+> **Research review:** 2026-09-13. This guide is based on the current LLMKube documentation and upstream Helm chart. The target production AI Factory baseline remains Ubuntu 24.04 LTS + RKE2 / Kubernetes 1.36.x + containerd + NVIDIA GPU Operator. The repository as committed today runs K3s `v1.36.4+k3s1` (Kubernetes 1.36) on five Ubuntu 26.04 LTS `t3a.medium` EC2 nodes (3 embedded-etcd servers, 2 workers) with no GPU; see [`../kubernetes-distribution-recommendation.md`](../kubernetes-distribution-recommendation.md) for why the production profile differs.
 
 ## Decision
 
@@ -187,7 +187,7 @@ Argo CD
 LiteLLM Gateway
 ```
 
-The repository as committed today is smaller: one Ubuntu 26.04 LTS `t3.medium` EC2 node running K3s `v1.36.4+k3s1` with Traefik, cert-manager and Argo CD, and no GPU node. Treat the block above as the target topology, not the current one.
+The repository as committed today is smaller: five Ubuntu 26.04 LTS `t3a.medium` EC2 nodes (3 embedded-etcd servers, 2 workers) running K3s `v1.36.4+k3s1` with Traefik, cert-manager and Argo CD, and no GPU node. Treat the block above as the target topology, not the current one.
 
 LLMKube's current quick-start documentation requires Kubernetes `1.27+`, Helm `3.0+`, `kubectl`, and cluster-admin permissions for CRD installation. Kubernetes 1.36 therefore satisfies its documented Kubernetes minimum.
 
@@ -494,9 +494,9 @@ For the production AI Factory, vLLM/SafeTensors models are likely more relevant 
 
 ---
 
-## Worked example: Gemma 3 1B on the current CPU-only node
+## Worked example: Gemma 3 1B on the current CPU-only cluster
 
-This example runs end to end on the repository as committed today: one Ubuntu 26.04 LTS `t3.medium` (2 vCPU, 4 GiB RAM) running K3s `v1.36.4+k3s1`, no GPU. It uses the smallest instruction-tuned Gemma release in GGUF form on the llama.cpp runtime, which is LLMKube's default. Everything below was checked against the v0.9.25 CRDs and the Hugging Face repositories on 2026-09-13.
+This example runs end to end on the repository as committed today: five Ubuntu 26.04 LTS `t3a.medium` EC2 nodes (3 embedded-etcd servers, 2 workers) running K3s `v1.36.4+k3s1`, no GPU. Each node has 2 vCPU and 4 GiB RAM. The three servers carry the `CriticalAddonsOnly=true:NoExecute` taint, so the inference pod schedules onto one of the two workers. It uses the smallest instruction-tuned Gemma release in GGUF form on the llama.cpp runtime, which is LLMKube's default. Everything below was checked against the v0.9.25 CRDs and the Hugging Face repositories on 2026-09-13.
 
 ### What Hugging Face is
 
@@ -516,7 +516,7 @@ Gemma weights come in two shapes:
 | `google/gemma-3-1b-it` | SafeTensors (original) | Yes, manual acceptance of the Gemma terms | ~2 GB | vLLM, TGI, transformers |
 | `ggml-org/gemma-3-1b-it-GGUF` | GGUF, converted by the llama.cpp maintainers | No | Q4_K_M 806 MB, Q8_0 1.07 GB, F16 2.0 GB | llama.cpp |
 
-The GGUF conversion is what runs on a CPU. It is not gated, so no token is needed for the download, but it is still distributed under Google's [Gemma Terms of Use](https://ai.google.dev/gemma/terms), which you accept by using it. `Q4_K_M` is the standard 4-bit quantization: a quarter of the memory of the original for a small quality loss, and the right choice for a 4 GiB node.
+The GGUF conversion is what runs on a CPU. It is not gated, so no token is needed for the download, but it is still distributed under Google's [Gemma Terms of Use](https://ai.google.dev/gemma/terms), which you accept by using it. `Q4_K_M` is the standard 4-bit quantization: a quarter of the memory of the original for a small quality loss, and the right choice for a 4 GiB worker.
 
 The context window is 32K tokens, but every token of context costs KV-cache memory. On this node keep it at 2048.
 
@@ -594,7 +594,7 @@ kubectl -n ai-models logs job/gemma-3-1b-it-prefetch -f
 kubectl -n ai-models get pvc
 ```
 
-`status.phase` moves from `Downloading` to `Ready`, and `status.cacheKey` records the hash the file is stored under. The 806 MB pull takes a minute or two on the EC2 node. Delete and recreate the Model or its InferenceService afterwards and nothing is downloaded again.
+`status.phase` moves from `Downloading` to `Ready`, and `status.cacheKey` records the hash the file is stored under. The 806 MB pull takes a minute or two on a worker node. Delete and recreate the Model or its InferenceService afterwards and nothing is downloaded again.
 
 ### Step 4: declare the InferenceService
 
@@ -611,7 +611,7 @@ spec:
   runtime: llamacpp
   replicas: 1
 
-  # Sized for a 4 GiB node shared with K3s, Traefik, cert-manager and Argo CD.
+  # Sized for a 4 GiB worker shared with Traefik, cert-manager, Argo CD and other workloads.
   contextSize: 2048
   parallelSlots: 1
   noWarmup: true
@@ -669,9 +669,9 @@ kubectl delete namespace ai-models
 
 Deleting the namespace also removes the cache PVC and the downloaded file.
 
-### Fitting on the t3.medium
+### Fitting on the t3a.medium workers
 
-The platform components already use roughly half of the node's 4 GiB. If the inference pod stays `Pending` with an insufficient-memory event, or is OOM-killed, check `kubectl top node` and either lower `contextSize` to 1024 or move the node to `t3.large` by changing `instance_type` in `infrastructure/live/_common/ec2.hcl`. That change replaces the EC2 instance, so clear termination protection first as the platform README describes.
+The inference pod runs on one of the two 4 GiB workers, which it shares with Traefik, cert-manager, Argo CD and any other application pods. If it stays `Pending` with an insufficient-memory event, or is OOM-killed, check `kubectl top node` and either lower `contextSize` to 1024 or raise the workers to `t3a.large` by changing `instance_type` on the `worker-1` and `worker-2` entries in `infrastructure/live/dev/us-east-1/ec2/terragrunt.hcl`. That change replaces those EC2 instances, so disable termination protection first as the platform README describes.
 
 ### Moving to the original weights and a GPU
 

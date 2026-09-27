@@ -1,6 +1,6 @@
 # LLM Gateway on Kubernetes
 
-> **Research review:** 2026-09-13. This guide targets the repository's production AI Factory direction: Ubuntu 24.04 LTS, RKE2 / Kubernetes 1.36.x, containerd, NVIDIA GPU workers, vLLM/KServe/KubeRay for inference, Traefik for north-south routing, cert-manager for TLS, and Helm for application installation. The repository as committed today runs K3s `v1.36.4+k3s1` (Kubernetes 1.36) on a single Ubuntu 26.04 LTS `t3.medium` EC2 node with no GPU; see [`../kubernetes-distribution-recommendation.md`](../kubernetes-distribution-recommendation.md) for why the production profile differs.
+> **Research review:** 2026-09-13. This guide targets the repository's production AI Factory direction: Ubuntu 24.04 LTS, RKE2 / Kubernetes 1.36.x, containerd, NVIDIA GPU workers, vLLM/KServe/KubeRay for inference, Traefik for north-south routing, cert-manager for TLS, and Helm for application installation. The repository as committed today runs K3s `v1.36.4+k3s1` (Kubernetes 1.36) on five Ubuntu 26.04 LTS `t3a.medium` EC2 nodes (3 embedded-etcd servers, 2 workers) with no GPU; see [`../kubernetes-distribution-recommendation.md`](../kubernetes-distribution-recommendation.md) for why the production profile differs.
 
 ## Decision
 
